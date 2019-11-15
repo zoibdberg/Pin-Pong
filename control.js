@@ -53,7 +53,9 @@ draw = {
   },
 
   bricks (brick){
-    // brick[row][col];
+
+    ///////////////////////////////////////////////////////////////////
+    // Вытащи эту хрень, иначе ты не сможешь обрабатывать столкновения.
     let arrOfbricksCoordinats = [];
     for(let i = 0; i < brick.row; i++){
       arrOfbricksCoordinats[i] = [];
@@ -61,7 +63,7 @@ draw = {
         arrOfbricksCoordinats[i][j] = {x: 0, y: 0};
       }
     }
-
+    ///////////////////////////////////////////////////////////////////
 
     for(let i = 0; i < brick.row; i++){
       for(let j = 0; j < brick.col; j++){
@@ -74,7 +76,53 @@ draw = {
   }
 };
 
-// draw.field();
+
+move = {
+  player (event) {
+    let keyState = (event.type == "keydown") ? true : false;
+    console.log(keyState);
+
+    // if(keyState)
+    switch(event.keyCode){
+      case 37:  
+        move.left(player, ball);
+        // alert("Key Code is 37");
+        break;
+      case 38:
+        // alert("Key Code is 38");
+        break;
+      case 39:        
+        move.right(player, ball);
+        // alert("Key Code is 39");
+        break;  
+        default:
+          // console.log("Nothin to do");
+        }
+      },
+      
+  attachedBall(player, ball){
+    ball.x = player.x + player.width / 2;
+    ball.y = player.y - 15;
+  },
+
+  left(player, ball){
+    if(ball.attached == true){
+      ball.x = player.x + player.width / 2;
+      ball.y = player.y - 15;
+    }
+    player.x -= 8;
+  },
+
+  right(player, ball){
+    if(ball.attached == true){
+      ball.x = player.x + player.width / 2;
+      ball.y = player.y - 15;
+    }
+    player.x += 8;
+  },
+
+};
+
 
 function loop(){
 
@@ -88,4 +136,5 @@ function loop(){
   
 }
 
+window.addEventListener("keydown", move.player);
 window.requestAnimationFrame(loop);

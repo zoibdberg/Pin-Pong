@@ -25,6 +25,8 @@ ball = {
   color: "#a04040",
   attached: true,
   type: "Normal",
+  speedX: 4,
+  speedY: 4,              
 },
 
 brick = {
@@ -35,6 +37,24 @@ brick = {
   width: (canvas.width - 30 * 6) / 5,
   height: 40,
   color: "#404040",
+
+  arrOfbricksCoordinats: [],
+
+  coordinats(){
+    for(let i = 0; i < brick.row; i++){
+      brick.arrOfbricksCoordinats[i] = [];
+      for(let j = 0; j < brick.col; j++){
+        brick.arrOfbricksCoordinats[i][j] = {x: 0, y: 0};
+      }
+    }
+
+    for(let i = 0; i < brick.row; i++){
+      for(let j = 0; j < brick.col; j++){
+        brick.arrOfbricksCoordinats[i][j].x = brick.H_distance +(brick.width + brick.H_distance) * i;
+        brick.arrOfbricksCoordinats[i][j].y = brick.V_distance + (brick.height + brick.V_distance) * j;
+      }
+    }
+  }
 }
 
 draw = {
@@ -49,28 +69,15 @@ draw = {
     ctx.beginPath();
     ctx.fillStyle = color;
     ctx.arc(x, y, radius, 0, 2*Math.PI, true);
-    ctx.fill();
+    ctx.fill(); 
   },
 
   bricks (brick){
-
-    ///////////////////////////////////////////////////////////////////
-    // Вытащи эту хрень, иначе ты не сможешь обрабатывать столкновения.
-    let arrOfbricksCoordinats = [];
-    for(let i = 0; i < brick.row; i++){
-      arrOfbricksCoordinats[i] = [];
-      for(let j = 0; j < brick.col; j++){
-        arrOfbricksCoordinats[i][j] = {x: 0, y: 0};
-      }
-    }
-    ///////////////////////////////////////////////////////////////////
+    brick.coordinats();
 
     for(let i = 0; i < brick.row; i++){
       for(let j = 0; j < brick.col; j++){
-        arrOfbricksCoordinats[i][j].x = brick.H_distance +(brick.width + brick.H_distance) * i;
-        arrOfbricksCoordinats[i][j].y = brick.V_distance + (brick.height + brick.V_distance) * j;
-
-        draw.rect(arrOfbricksCoordinats[i][j].x, arrOfbricksCoordinats[i][j].y, brick.width, brick.height, brick.color);
+        draw.rect(brick.arrOfbricksCoordinats[i][j].x, brick.arrOfbricksCoordinats[i][j].y, brick.width, brick.height, brick.color);
       }
     }
   }
@@ -80,7 +87,6 @@ draw = {
 move = {
   player (event) {
     let keyState = (event.type == "keydown") ? true : false;
-    console.log(keyState);
 
     // if(keyState)
     switch(event.keyCode){
@@ -89,40 +95,86 @@ move = {
         // alert("Key Code is 37");
         break;
       case 38:
-        // alert("Key Code is 38");
-        break;
+          ball.attached = false;
+          break;
       case 39:        
         move.right(player, ball);
-        // alert("Key Code is 39");
         break;  
-        default:
-          // console.log("Nothin to do");
-        }
-      },
+    }
+  },
       
   attachedBall(player, ball){
-    ball.x = player.x + player.width / 2;
-    ball.y = player.y - 15;
-  },
-
-  left(player, ball){
     if(ball.attached == true){
       ball.x = player.x + player.width / 2;
       ball.y = player.y - 15;
     }
+  },
+
+  left(player, ball){
+    move.attachedBall(player, ball);
     player.x -= 8;
   },
 
   right(player, ball){
-    if(ball.attached == true){
-      ball.x = player.x + player.width / 2;
-      ball.y = player.y - 15;
-    }
+    move.attachedBall(player, ball);
     player.x += 8;
   },
 
+  flight(player, ball){
+    if(!ball.attached){
+      ball.x += ball.speedX;
+      ball.y -= ball.speedY;
+    }
+  },
+
+
+  
 };
 
+collide = {
+  
+  signChange(ball, n){
+    if(n == 1){
+      ball.speedX *= -1;
+    }else{
+      ball.speedY *= -1;
+    }
+  },
+  
+  collideRight(ball){
+    if(ball.x >= canvas.width){
+      collide.signChange(ball, 1);
+    }
+  },
+
+  collideTop (ball){
+    if(ball.y <= 0){
+      collide.signChange(ball, 2);
+    }
+  },
+
+  collideLeft(ball){
+    if(ball.x <= 0){
+      collide.signChange(ball, 1);
+    }
+  },
+
+  collidePlayer(ball, player){
+    if(player.x < ball.x && player.x + player.width > ball.x && player.y <  ball.y){
+        collide.signChange(ball, 2);
+      }
+  },
+
+  collide(ball){
+    // console.log("Hi");
+    collide.collideRight(ball);
+    collide.collideTop(ball);
+    collide.collideLeft(ball);
+
+    collide.collidePlayer(ball, player);
+  },
+  
+}
 
 function loop(){
 
@@ -131,9 +183,11 @@ function loop(){
   draw.circle(ball.x, ball.y, ball.radius, ball.color);
   draw.bricks(brick);
 
+  collide.collide(ball);
+  move.flight(player, ball);
+
 
   window.requestAnimationFrame(loop);
-  
 }
 
 window.addEventListener("keydown", move.player);

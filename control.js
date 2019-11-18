@@ -26,7 +26,7 @@ ball = {
   attached: true,
   type: "Normal",
   speedX: 4,
-  speedY: 4,              
+  speedY: 4            
 },
 
 brick = {
@@ -37,23 +37,28 @@ brick = {
   width: (canvas.width - 30 * 6) / 5,
   height: 40,
   color: "#404040",
+  text: 15,
 
-  arrOfbricksCoordinats: [],
+  bricks: [],
 
-  coordinats(){
+  fillArray(){
     for(let i = 0; i < brick.row; i++){
-      brick.arrOfbricksCoordinats[i] = [];
+      brick.bricks[i] = [];
       for(let j = 0; j < brick.col; j++){
-        brick.arrOfbricksCoordinats[i][j] = {x: 0, y: 0};
+        brick.bricks[i][j] = {x: 0, y: 0, visable: false,};
       }
     }
+  },
 
+  fillCoordinats(brick){
     for(let i = 0; i < brick.row; i++){
       for(let j = 0; j < brick.col; j++){
-        brick.arrOfbricksCoordinats[i][j].x = brick.H_distance +(brick.width + brick.H_distance) * i;
-        brick.arrOfbricksCoordinats[i][j].y = brick.V_distance + (brick.height + brick.V_distance) * j;
+        brick.bricks[i][j].x = brick.H_distance + (brick.width  + brick.H_distance) * i;
+        brick.bricks[i][j].y = brick.V_distance + (brick.height + brick.V_distance) * j;
+        brick.bricks[i][j].visable = true;
       }
     }
+    // brick.bricks[1][1].visable = false;
   }
 }
 
@@ -72,67 +77,66 @@ draw = {
     ctx.fill(); 
   },
 
-  bricks (brick){
-    brick.coordinats();
-
+  field (brick){
     for(let i = 0; i < brick.row; i++){
       for(let j = 0; j < brick.col; j++){
-        draw.rect(brick.arrOfbricksCoordinats[i][j].x, brick.arrOfbricksCoordinats[i][j].y, brick.width, brick.height, brick.color);
+        if(brick.bricks[i][j].visable == true){
+          draw.rect(brick.bricks[i][j].x, brick.bricks[i][j].y, brick.width, brick.height, brick.color);
+        }
       }
     }
-  }
+  },
 };
 
 
 move = {
-  player (event) {
-    let keyState = (event.type == "keydown") ? true : false;
+  left: false,
+  right: false,
 
+  player:  function(event) {
+    let keyState = (event.type == "click") ? true : false;
+    // alert(event.keyCode);
     // if(keyState)
-    switch(event.keyCode){
-      case 37:  
-        move.left(player, ball);
-        // alert("Key Code is 37");
-        break;
-      case 38:
-          ball.attached = false;
-          break;
-      case 39:        
-        move.right(player, ball);
-        break;  
+
+    let width = window.innerWidth;
+
+    if(event.clientX < width / 2){  
+      move.left = keyState;
+      move.right = false;
+    }else{
+      move.right = keyState;
+      move.left = false;
     }
+
+
+    // switch(event.type){
+    //   case "click":  
+    //   move.left = keyState;
+    //     break;
+    //   case 32:
+    //   case 38:
+    //     ball.attached = false;
+    //     break;
+    //   case "mouseup":      
+    //   alert("hi")  
+    //     // move.right = false;
+    //     // move.left = false;
+    //     break;  
+    // }
   },
       
-  attachedBall(player, ball){
+  attachedOrNot(player, ball){
     if(ball.attached == true){
       ball.x = player.x + player.width / 2;
       ball.y = player.y - 15;
-    }
-  },
-
-  left(player, ball){
-    move.attachedBall(player, ball);
-    player.x -= 8;
-  },
-
-  right(player, ball){
-    move.attachedBall(player, ball);
-    player.x += 8;
-  },
-
-  flight(player, ball){
-    if(!ball.attached){
+    }else{
       ball.x += ball.speedX;
       ball.y -= ball.speedY;
     }
   },
-
-
-  
 };
 
 collide = {
-  
   signChange(ball, n){
     if(n == 1){
       ball.speedX *= -1;
@@ -142,53 +146,157 @@ collide = {
   },
   
   collideRight(ball){
-    if(ball.x >= canvas.width){
+    if(ball.x + ball.radius >= canvas.width){
       collide.signChange(ball, 1);
     }
   },
 
   collideTop (ball){
-    if(ball.y <= 0){
+    if(ball.y - ball.radius <= 0){
       collide.signChange(ball, 2);
     }
   },
 
   collideLeft(ball){
-    if(ball.x <= 0){
+    if(ball.x - ball.radius <= 0){
       collide.signChange(ball, 1);
     }
   },
 
   collidePlayer(ball, player){
-    if(player.x < ball.x && player.x + player.width > ball.x && player.y <  ball.y){
+    if(player.x < ball.x && player.x + player.width > ball.x 
+      && player.y <  ball.y + ball.radius
+      && player.y + player.height > ball.y + ball.radius){
         collide.signChange(ball, 2);
-      }
+    }
   },
 
-  collide(ball){
+  collideBrick(ball, brick){
+    let x, y;
+    x = Math.floor((ball.x - brick.H_distance) / (brick.H_distance + brick.width ));
+    y = Math.floor((ball.y - brick.V_distance) / (brick.V_distance + brick.height)); 
+    
+    
+    if(y <= 2 && y >= 0 && x <= 4 && x >= 0){
+      if(brick.bricks[x][y].visable){
+        brick.bricks[x][y].visable = false;
+        brick.text -= 1;
+      }
+    }
+  },
+
+  borderPlayer(brick){
+    if(player.x < 0){
+      player.x = 0;
+    }
+    if(player.x + player.width > canvas.width){
+      player.x = canvas.width - player.width;
+    }
+  },
+
+  collide(ball, brick, player){
     // console.log("Hi");
     collide.collideRight(ball);
     collide.collideTop(ball);
     collide.collideLeft(ball);
+    
+    collide.collideBrick(ball, brick);
+    collide.borderPlayer(brick);
+    utility.gameover(ball);
+    utility.win(brick);
 
     collide.collidePlayer(ball, player);
   },
-  
 }
+
+utility = {
+  textWidth(phrase, fontsize){
+    let ml = 0.2645833333333;
+    phrase += '';
+    return phrase.split('').length*fontsize*ml;
+   },
+
+   gameover(ball){
+    if(ball.y - ball.radius > canvas.height){
+      brick.text = "Game Over!"
+      utility.message(brick.text);
+      ball.speedX = 0;
+      ball.speedY = 0;
+      setTimeout(()=>{utility.reset(brick)}, 4000);
+    }
+  },
+
+  win(brick){ 
+    if(brick.text == 0){
+      brick.text = "You Win!";
+      utility.message(brick.text);
+      ball.speedX = 0;
+      ball.speedY = 0;
+      setTimeout(()=>{utility.reset(brick)}, 4000);  
+    }
+  }, 
+  
+  message(num){
+    ctx.fillStyle = "#c5c5c5";
+    ctx.beginPath();
+    if(isNaN(num)){
+      ctx.font = `${canvas.width / num.length}px Verdana`;
+      ctx.fillText(num, canvas.width / 2 - utility.textWidth(num, canvas.width / num.length), canvas.height / 2)
+    }else{
+      ctx.font = "100px Verdana";
+      toString(num);
+      ctx.fillText(('0'+ num).slice(-2), canvas.width / 2 - utility.textWidth(num, 100), canvas.height / 2 - 50);
+    }
+  },
+  
+  reset(){
+    brick.fillCoordinats(brick);
+    player.x = canvas.width / 2 - 100/2;
+    player.y = canvas.height - 40;
+    ball.x = player.x + player.width / 2;
+    ball.y = player.y - ball.radius;
+    ball.attached = true;
+    brick.text = 15;
+    ball.speedX = 4;
+    ball.speedY = -4;
+  },
+}
+
+brick.fillArray();  
+brick.fillCoordinats(brick);
 
 function loop(){
 
+  
+  if(move.right) {
+    player.x += 4;
+  }
+  if(move.left){
+    player.x -= 4;
+  }
+  //Canvas
   draw.rect(0, 0, canvas.width, canvas.height, "#e0e0e0");
+  //Player
   draw.rect(player.x, player.y, player.width, player.height, player.color);
+  //Message
+  utility.message(brick.text);
+  //Ball
   draw.circle(ball.x, ball.y, ball.radius, ball.color);
-  draw.bricks(brick);
-
-  collide.collide(ball);
-  move.flight(player, ball);
+  //Bricks
+  draw.field(brick);
+  
+  
+  move.attachedOrNot(player, ball);
+  
+  collide.collide(ball, brick, player);
 
 
   window.requestAnimationFrame(loop);
 }
 
-window.addEventListener("keydown", move.player);
+// window.addEventListener("mousedown", move.player);
+window.addEventListener("click", move.player);
 window.requestAnimationFrame(loop);
+
+
+//widow.innerWith

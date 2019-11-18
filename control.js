@@ -240,10 +240,10 @@ utility = {
     ctx.fillStyle = "#c5c5c5";
     ctx.beginPath();
     if(isNaN(num)){
-      ctx.font = `${canvas.width / num.length}px Verdana`;
+      ctx.font = `${canvas.width / num.length}px`;
       ctx.fillText(num, canvas.width / 2 - utility.textWidth(num, canvas.width / num.length), canvas.height / 2)
     }else{
-      ctx.font = "100px Verdana";
+      ctx.font = "100px";
       toString(num);
       ctx.fillText(('0'+ num).slice(-2), canvas.width / 2 - utility.textWidth(num, 100), canvas.height / 2 - 50);
     }

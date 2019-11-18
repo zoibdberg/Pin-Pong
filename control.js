@@ -94,7 +94,7 @@ move = {
   right: false,
 
   player:  function(event) {
-    let keyState = (event.type == "click") ? true : false;
+    let keyState = (event.type == "mousedown") ? true : false;
     // alert(event.keyCode);
     // if(keyState)
 
@@ -295,7 +295,7 @@ function loop(){
 }
 
 // window.addEventListener("mousedown", move.player);
-window.addEventListener("click", move.player);
+window.addEventListener("mousedown", move.player);
 window.requestAnimationFrame(loop);
 
 
